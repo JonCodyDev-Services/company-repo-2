@@ -10,10 +10,6 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.COMPANY_REPO_ACTIONS_TOKEN }}  # Reference to your custom token
 
-    permissions:
-      issues: write    # Allow the action to write to issues
-      projects: write  # Allow the action to write to projects
-
     steps:
       - name: Add the issue to the project
         uses: actions/github-script@v6
