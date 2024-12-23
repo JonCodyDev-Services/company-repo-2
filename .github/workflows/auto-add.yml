@@ -7,25 +7,31 @@ on:
 jobs:
   add-to-project:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.COMPANY_REPO_ACTIONS_TOKEN }}  # Reference to your custom token
+
+    permissions:
+      issues: write    # Allow the action to write to issues
+      projects: write  # Allow the action to write to projects
+
     steps:
       - name: Add the issue to the project
         uses: actions/github-script@v6
         with:
           script: |
-            const projectId = 4; // Your project ID from the URL
+            const projectId = 4; // Your project ID
             const issueNumber = ${{ github.event.issue.number }};
             
             // Get the columns of the project
-            const projectColumns = await github.projects.listColumns({
+            const projectColumns = await github.rest.projects.listColumns({
               project_id: projectId
             });
             
             // Find the "Todo" column (exact match with "Todo")
             const todoColumn = projectColumns.data.find(column => column.name === "Todo");
-            
+
             if (todoColumn) {
-              // Add the issue to the "Todo" column
-              await github.projects.createCard({
+              await github.rest.projects.createCard({
                 column_id: todoColumn.id,  // Column ID for "Todo"
                 content_id: issueNumber,
                 content_type: 'Issue'
