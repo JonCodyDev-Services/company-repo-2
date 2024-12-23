@@ -2,31 +2,33 @@ name: Add Issue to Project
 
 on:
   issues:
-    types: [opened]  # Trigger the action when an issue is opened
+    types: [opened]
 
 jobs:
   add-to-project:
     runs-on: ubuntu-latest
     env:
-      GITHUB_TOKEN: ${{ secrets.COMPANY_REPO_ACTIONS_TOKEN }}  # Reference to your custom token
+      GITHUB_TOKEN: ${{ secrets.COMPANY_REPO_ACTIONS_TOKEN }}
 
     steps:
       - name: Add the issue to the project
         uses: actions/github-script@v6
         with:
           script: |
-            const projectId = 4; // Your project ID
+            const orgName = "JonCodyDev-Services";  // Your organization name
+            const projectId = 4;  // Your project ID
             const issueNumber = ${{ github.event.issue.number }};
             
-            // Get the columns of the project
+            // Get the columns of the project (organization-level project)
             const projectColumns = await github.rest.projects.listColumns({
-              project_id: projectId
+              project_id: projectId,  // Use project_id directly
             });
             
             // Find the "Todo" column (exact match with "Todo")
             const todoColumn = projectColumns.data.find(column => column.name === "Todo");
 
             if (todoColumn) {
+              // Add the issue to the "Todo" column
               await github.rest.projects.createCard({
                 column_id: todoColumn.id,  // Column ID for "Todo"
                 content_id: issueNumber,
