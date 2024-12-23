@@ -28,7 +28,21 @@ jobs:
             const project = projects.data.find(p => p.name === projectName);
 
             if (!project) {
-              throw new Error(`Project with name "${projectName}" not found in the organization.`);
+              // If the project is not found in the organization, try fetching from repository-level projects
+              const repoName = 'your-repo-name';  // Replace with your repo name
+
+              const repoProjects = await github.rest.projects.listForRepo({
+                owner: orgName,
+                repo: repoName,
+              });
+
+              const repoProject = repoProjects.data.find(p => p.name === projectName);
+
+              if (!repoProject) {
+                throw new Error(`Project with name "${projectName}" not found in the organization or repository.`);
+              }
+
+              project = repoProject;  // Switch to the repository-level project
             }
 
             // Get the columns of the project
