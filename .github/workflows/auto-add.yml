@@ -1,0 +1,15 @@
+name: Add Issue to Backlog
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  add-to-backlog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add Backlog Label to New Issue
+        uses: peter-evans/add-label-to-issue@v2
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          labels: backlog
