@@ -9,7 +9,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add the issue to the project
-        uses: peter-evans/add-issue-to-project@v2
+        uses: actions/github-script@v6
         with:
-          project-url: 'https://github.com/orgs/JonCodyDev-Services/projects/4'  # URL of your project
-          issue-number: ${{ github.event.issue.number }}  # The issue number of the opened issue
+          script: |
+            const projectId = 4; // Your project ID from the URL
+            const issueNumber = ${{ github.event.issue.number }};
+            
+            // Get the columns of the project
+            const projectColumns = await github.projects.listColumns({
+              project_id: projectId
+            });
+            
+            // Find the "Todo" column (exact match with "Todo")
+            const todoColumn = projectColumns.data.find(column => column.name === "Todo");
+            
+            if (todoColumn) {
+              // Add the issue to the "Todo" column
+              await github.projects.createCard({
+                column_id: todoColumn.id,  // Column ID for "Todo"
+                content_id: issueNumber,
+                content_type: 'Issue'
+              });
+            } else {
+              console.log('Todo column not found');
+            }
