@@ -1,51 +1,38 @@
-name: Add Issue to Project
+name: Test Project Columns
 
 on:
-  issues:
-    types: [opened]
+  push:
+    branches:
+      - main
 
 jobs:
-  add-to-project:
+  test-project-columns:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.COMPANY_REPO_ACTIONS_TOKEN }}
 
     steps:
-      - name: Add the issue to the project
+      - name: List Project Columns
         uses: actions/github-script@v6
         with:
           script: |
             const orgName = "JonCodyDev-Services";  // Your organization name
-            const projectId = 4;  // Your project ID
-            const issueNumber = ${{ github.event.issue.number }};
-
+            const projectName = "Your-Project-Name";  // Your project name (replace with actual project name)
+            
             // Get all projects for the organization
             const projects = await github.rest.projects.listForOrg({
-              org: orgName, // Organization name
+              org: orgName,
             });
 
-            // Find the specific project by its ID
-            const project = projects.data.find(p => p.id === projectId);
+            const project = projects.data.find(p => p.name === projectName);
 
             if (!project) {
-              throw new Error(`Project with ID ${projectId} not found in the organization.`);
+              throw new Error(`Project with name "${projectName}" not found in the organization.`);
             }
 
             // Get the columns of the project
             const projectColumns = await github.rest.projects.listColumns({
-              project_id: project.id, // Use the correct project ID
+              project_id: project.id,
             });
 
-            // Find the "Todo" column
-            const todoColumn = projectColumns.data.find(column => column.name === "Todo");
-
-            if (todoColumn) {
-              // Add the issue to the "Todo" column
-              await github.rest.projects.createCard({
-                column_id: todoColumn.id,  // Column ID for "Todo"
-                content_id: issueNumber,
-                content_type: 'Issue'
-              });
-            } else {
-              console.log('Todo column not found');
-            }
+            console.log('Project Columns:', projectColumns.data);
