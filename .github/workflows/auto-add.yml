@@ -18,14 +18,25 @@ jobs:
             const orgName = "JonCodyDev-Services";  // Your organization name
             const projectId = 4;  // Your project ID
             const issueNumber = ${{ github.event.issue.number }};
-            
-            // Get the columns of the project (organization-level project)
-            const projectColumns = await github.rest.projects.listColumnsForOrg({
-              org: orgName,          // Organization name
-              project_id: projectId  // Project ID
+
+            // Get all projects for the organization
+            const projects = await github.rest.projects.listForOrg({
+              org: orgName, // Organization name
             });
-            
-            // Find the "Todo" column (exact match with "Todo")
+
+            // Find the specific project by its ID
+            const project = projects.data.find(p => p.id === projectId);
+
+            if (!project) {
+              throw new Error(`Project with ID ${projectId} not found in the organization.`);
+            }
+
+            // Get the columns of the project
+            const projectColumns = await github.rest.projects.listColumns({
+              project_id: project.id, // Use the correct project ID
+            });
+
+            // Find the "Todo" column
             const todoColumn = projectColumns.data.find(column => column.name === "Todo");
 
             if (todoColumn) {
