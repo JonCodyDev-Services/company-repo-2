@@ -1,29 +1,30 @@
-name: Test Project Columns
+name: Add Issue to Project
 
 on:
-  push:
-    branches:
-      - main
+  issues:
+    types: [opened]
 
 jobs:
-  test-project-columns:
+  add-to-project:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.COMPANY_REPO_ACTIONS_TOKEN }}
 
     steps:
-      - name: List Project Columns
+      - name: Add the issue to the project
         uses: actions/github-script@v6
         with:
           script: |
             const orgName = "JonCodyDev-Services";  // Your organization name
-            const projectName = "Your-Project-Name";  // Your project name (replace with actual project name)
+            const projectName = "proj2";  // Your project name
+            const issueNumber = ${{ github.event.issue.number }};
             
             // Get all projects for the organization
             const projects = await github.rest.projects.listForOrg({
               org: orgName,
             });
 
+            // Find the project with the name 'proj2'
             const project = projects.data.find(p => p.name === projectName);
 
             if (!project) {
@@ -34,5 +35,17 @@ jobs:
             const projectColumns = await github.rest.projects.listColumns({
               project_id: project.id,
             });
+            
+            // Find the "Todo" column (exact match with "Todo")
+            const todoColumn = projectColumns.data.find(column => column.name === "Todo");
 
-            console.log('Project Columns:', projectColumns.data);
+            if (todoColumn) {
+              // Add the issue to the "Todo" column
+              await github.rest.projects.createCard({
+                column_id: todoColumn.id,  // Column ID for "Todo"
+                content_id: issueNumber,
+                content_type: 'Issue'
+              });
+            } else {
+              console.log('Todo column not found');
+            }
