@@ -22,6 +22,7 @@ jobs:
             // Get the columns of the project (organization-level project)
             const projectColumns = await github.rest.projects.listColumns({
               project_id: projectId,  // Use project_id directly
+              org: orgName            // Reference the org for organization-level project
             });
             
             // Find the "Todo" column (exact match with "Todo")
