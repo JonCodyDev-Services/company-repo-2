@@ -1,15 +1,15 @@
-name: Add Issue to Backlog
+name: Add Issue to Project
 
 on:
   issues:
-    types: [opened]
+    types: [opened]  # Trigger the action when an issue is opened
 
 jobs:
-  add-to-backlog:
+  add-to-project:
     runs-on: ubuntu-latest
     steps:
-      - name: Add Backlog Label to New Issue
-        uses: peter-evans/add-label-to-issue@v2
+      - name: Add the issue to the project
+        uses: peter-evans/add-issue-to-project@v2
         with:
-          issue-number: ${{ github.event.issue.number }}
-          labels: backlog
+          project-url: 'https://github.com/orgs/JonCodyDev-Services/projects/4'  # URL of your project
+          issue-number: ${{ github.event.issue.number }}  # The issue number of the opened issue
