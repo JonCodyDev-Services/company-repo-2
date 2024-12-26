@@ -24,42 +24,57 @@ jobs:
             const projectName = "proj2";  // Your project name
             const issueNumber = ${{ github.event.issue.number }};
             
-            // Get all projects for the repository
-            const repoProjects = await github.rest.projects.listForRepo({
-              owner: repoOwner,
-              repo: repoName,
-            });
+            // GraphQL query to get GitHub Projects Beta (Projects V2)
+            const query = `
+              query {
+                repository(owner: "${repoOwner}", name: "${repoName}") {
+                  projectsV2(first: 10) {
+                    nodes {
+                      id
+                      title
+                      columns(first: 10) {
+                        nodes {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
 
-            // Log the API response to check the projects
-            console.log('API Response:', repoProjects.data);
+            // Send the GraphQL query to GitHub
+            const result = await github.graphql(query);
 
-            // Check if no projects were returned
-            if (repoProjects.data.length === 0) {
-              console.log(`No projects found for repository ${repoOwner}/${repoName}.`);
-            } else {
-              console.log(`Found ${repoProjects.data.length} project(s):`);
-              repoProjects.data.forEach(project => {
-                console.log(`Project Name: ${project.name}, Project ID: ${project.id}`);
-              });
+            // Log the response to check the projects
+            console.log('GitHub Projects Beta Response:', result);
+
+            // Check if no projects found
+            if (result.repository.projectsV2.nodes.length === 0) {
+              console.log(`No GitHub Projects Beta found for repository ${repoOwner}/${repoName}.`);
+              return;  // Exit if no projects found
             }
 
-            // Find the project with the name 'proj2'
-            let project = repoProjects.data.find(p => p.name === projectName);
+            // Log the found projects
+            result.repository.projectsV2.nodes.forEach(project => {
+              console.log(`Project Title: ${project.title}, Project ID: ${project.id}`);
+              
+              // Check columns in the project
+              project.columns.nodes.forEach(column => {
+                console.log(`Column Name: ${column.name}, Column ID: ${column.id}`);
+              });
+            });
+
+            // Find the project and column
+            let project = result.repository.projectsV2.nodes.find(p => p.title === projectName);
 
             if (!project) {
-              throw new Error(`Project with name "${projectName}" not found in the repository.`);
+              throw new Error(`GitHub Project with name "${projectName}" not found.`);
             }
 
-            // Get the columns of the project
-            const projectColumns = await github.rest.projects.listColumns({
-              project_id: project.id,
-            });
-
-            // Log the columns to check if the "Todo" column exists
-            console.log('Columns for Project:', projectColumns.data);
-            
-            // Find the "Todo" column (case-insensitive)
-            const todoColumn = projectColumns.data.find(column => column.name.toLowerCase() === "todo");
+            // Find the "Todo" column in the project
+            const todoColumn = project.columns.nodes.find(column => column.name.toLowerCase() === "todo");
 
             if (todoColumn) {
               // Add the issue to the "Todo" column
