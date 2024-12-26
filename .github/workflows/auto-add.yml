@@ -30,8 +30,18 @@ jobs:
               repo: repoName,
             });
 
-            // Log the list of projects
-            console.log('Projects:', repoProjects.data);
+            // Log the API response to check the projects
+            console.log('API Response:', repoProjects.data);
+
+            // Check if no projects were returned
+            if (repoProjects.data.length === 0) {
+              console.log(`No projects found for repository ${repoOwner}/${repoName}.`);
+            } else {
+              console.log(`Found ${repoProjects.data.length} project(s):`);
+              repoProjects.data.forEach(project => {
+                console.log(`Project Name: ${project.name}, Project ID: ${project.id}`);
+              });
+            }
 
             // Find the project with the name 'proj2'
             let project = repoProjects.data.find(p => p.name === projectName);
@@ -45,7 +55,7 @@ jobs:
               project_id: project.id,
             });
 
-            // Log the columns for the found project
+            // Log the columns to check if the "Todo" column exists
             console.log('Columns for Project:', projectColumns.data);
             
             // Find the "Todo" column (case-insensitive)
