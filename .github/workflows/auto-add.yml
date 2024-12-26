@@ -8,8 +8,8 @@ jobs:
   add-to-project:
     runs-on: ubuntu-latest
     permissions:
-      repository-projects: write  # Ensures the token can interact with projects
-      issues: write                # Ensures the token can interact with issues
+      repository-projects: write  # Allows interaction with repository projects
+      issues: write                # Allows interaction with issues
 
     env:
       GITHUB_TOKEN: ${{ secrets.COMPANY_REPO_ACTIONS_TOKEN }}
