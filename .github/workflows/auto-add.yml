@@ -1,30 +1,26 @@
-name: Add Issue to Project
+name: Query Projects V2
 
 on:
-  issues:
-    types: [opened]
+  push:
+    branches:
+      - main
 
 jobs:
-  add-to-project:
+  query-projects:
     runs-on: ubuntu-latest
     permissions:
-      repository-projects: write  # Allows interaction with repository projects
-      issues: write                # Allows interaction with issues
-
-    env:
-      GITHUB_TOKEN: ${{ secrets.COMPANY_REPO_ACTIONS_TOKEN }}
+      actions: write  # Adjust if needed
+      issues: write
+      repository-projects: read  # Allow read access to Projects
 
     steps:
-      - name: Add the issue to the project
+      - name: Query Projects V2 via GraphQL
         uses: actions/github-script@v6
         with:
           script: |
             const repoOwner = "JonCodyDev-Services";  // Your organization name
             const repoName = "company-repo-2";  // Your repository name
-            const projectName = "proj2";  // Your project name
-            const issueNumber = ${{ github.event.issue.number }};
-            
-            // GraphQL query to get GitHub Projects Beta (Projects V2)
+
             const query = `
               query {
                 repository(owner: "${repoOwner}", name: "${repoName}") {
@@ -44,46 +40,18 @@ jobs:
               }
             `;
 
-            // Send the GraphQL query to GitHub
-            const result = await github.graphql(query);
+            const response = await github.graphql(query);
 
-            // Log the response to check the projects
-            console.log('GitHub Projects Beta Response:', result);
+            console.log('Projects V2:', response.repository.projectsV2.nodes);
 
-            // Check if no projects found
-            if (result.repository.projectsV2.nodes.length === 0) {
-              console.log(`No GitHub Projects Beta found for repository ${repoOwner}/${repoName}.`);
-              return;  // Exit if no projects found
-            }
-
-            // Log the found projects and their views (columns)
-            result.repository.projectsV2.nodes.forEach(project => {
-              console.log(`Project Title: ${project.title}, Project ID: ${project.id}`);
-              
-              // Check views (columns) in the project
-              project.views.nodes.forEach(view => {
-                console.log(`View (Column) Name: ${view.name}, View ID: ${view.id}`);
-              });
-            });
-
-            // Find the project and view
-            let project = result.repository.projectsV2.nodes.find(p => p.title === projectName);
-
-            if (!project) {
-              throw new Error(`GitHub Project with name "${projectName}" not found.`);
-            }
-
-            // Find the "Todo" view (column) in the project
-            const todoView = project.views.nodes.find(view => view.name.toLowerCase() === "todo");
-
-            if (todoView) {
-              // Add the issue to the "Todo" view
-              await github.rest.projects.createCard({
-                project_id: project.id,  // Project ID
-                content_id: issueNumber,
-                content_type: 'Issue'
-              });
-              console.log(`Issue #${issueNumber} added to the "Todo" view in project "${projectName}".`);
+            // Optionally, process the response here if needed
+            if (response.repository.projectsV2.nodes.length === 0) {
+              console.log('No Projects found.');
             } else {
-              console.log('Todo view (column) not found');
+              response.repository.projectsV2.nodes.forEach(project => {
+                console.log(`Project: ${project.title}`);
+                project.views.nodes.forEach(view => {
+                  console.log(`  View: ${view.name}`);
+                });
+              });
             }
