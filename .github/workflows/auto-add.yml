@@ -9,17 +9,23 @@ jobs:
   query-projects:
     runs-on: ubuntu-latest
     permissions:
-      actions: write  # Adjust if needed
+      contents: write
+      actions: write
       issues: write
-      repository-projects: read  # Allow read access to Projects
+      repository-projects: read
 
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
       - name: Query Projects V2 via GraphQL
         uses: actions/github-script@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           script: |
-            const repoOwner = "JonCodyDev-Services";  // Your organization name
-            const repoName = "company-repo-2";  // Your repository name
+            const repoOwner = "JonCodyDev-Services";
+            const repoName = "company-repo-2";
 
             const query = `
               query {
@@ -40,18 +46,20 @@ jobs:
               }
             `;
 
-            const response = await github.graphql(query);
+            try {
+              const response = await github.graphql(query);
+              console.log('Projects V2:', response.repository.projectsV2.nodes);
 
-            console.log('Projects V2:', response.repository.projectsV2.nodes);
-
-            // Optionally, process the response here if needed
-            if (response.repository.projectsV2.nodes.length === 0) {
-              console.log('No Projects found.');
-            } else {
-              response.repository.projectsV2.nodes.forEach(project => {
-                console.log(`Project: ${project.title}`);
-                project.views.nodes.forEach(view => {
-                  console.log(`  View: ${view.name}`);
+              if (response.repository.projectsV2.nodes.length === 0) {
+                console.log('No Projects found.');
+              } else {
+                response.repository.projectsV2.nodes.forEach(project => {
+                  console.log(`Project: ${project.title}`);
+                  project.views.nodes.forEach(view => {
+                    console.log(`  View: ${view.name}`);
+                  });
                 });
-              });
+              }
+            } catch (error) {
+              console.error('Error querying Projects V2:', error);
             }
