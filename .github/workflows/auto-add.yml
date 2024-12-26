@@ -20,29 +20,50 @@ jobs:
         with:
           script: |
             const orgName = "JonCodyDev-Services";  // Your organization name
-            const projectId = 4;  // Explicitly use the Project ID '4' here
+            const projectName = "proj2";  // Your project name
             const issueNumber = ${{ github.event.issue.number }};
             
-            // Directly access the project using its ID
-            const project = await github.rest.projects.get({
-              project_id: projectId  // Use the project ID directly
+            // Step 1: Get all projects for the organization (Beta)
+            const projects = await github.rest.projects.listForOrg({
+              org: orgName,
             });
 
-            // Get the columns of the project
-            const projectColumns = await github.rest.projects.listColumns({
-              project_id: projectId,  // Refer to the project ID explicitly
-            });
-            
-            // Find the "Todo" column (exact match with "Todo")
-            const todoColumn = projectColumns.data.find(column => column.name === "Todo");
+            // Step 2: Find the project with the name 'proj2'
+            let project = projects.data.find(p => p.name === projectName);
 
-            if (todoColumn) {
-              // Add the issue to the "Todo" column
-              await github.rest.projects.createCard({
-                column_id: todoColumn.id,  // Column ID for "Todo"
-                content_id: issueNumber,
-                content_type: 'Issue'
+            if (!project) {
+              // If the project is not found in the organization, try fetching from repository-level projects (Beta)
+              const repoName = 'company-repo-2';  // Your actual repository name
+
+              const repoProjects = await github.rest.projects.listForRepo({
+                owner: orgName,
+                repo: repoName,  // Reference the actual repo name here
               });
-            } else {
-              console.log('Todo column not found');
+
+              project = repoProjects.data.find(p => p.name === projectName);
+
+              if (!project) {
+                throw new Error(`Project with name "${projectName}" not found in the organization or repository.`);
+              }
             }
+
+            // Step 3: Retrieve the columns for the project (Beta)
+            const columns = await github.rest.projects.listColumns({
+              project_id: project.id,
+            });
+
+            // Step 4: Find the first column
+            const firstColumn = columns.data[0];
+
+            if (!firstColumn) {
+              throw new Error(`No columns found for project "${projectName}".`);
+            }
+
+            // Step 5: Create a card for the issue in the first column
+            await github.rest.projects.createCard({
+              column_id: firstColumn.id,  // Column ID for the first column
+              content_id: issueNumber,
+              content_type: 'Issue',
+            });
+
+            console.log(`Issue #${issueNumber} added to project "${projectName}", column "${firstColumn.name}".`);
