@@ -30,6 +30,9 @@ jobs:
               repo: repoName,
             });
 
+            // Log the list of projects
+            console.log('Projects:', repoProjects.data);
+
             // Find the project with the name 'proj2'
             let project = repoProjects.data.find(p => p.name === projectName);
 
@@ -41,9 +44,12 @@ jobs:
             const projectColumns = await github.rest.projects.listColumns({
               project_id: project.id,
             });
+
+            // Log the columns for the found project
+            console.log('Columns for Project:', projectColumns.data);
             
-            // Find the "Todo" column (exact match with "Todo")
-            const todoColumn = projectColumns.data.find(column => column.name === "Todo");
+            // Find the "Todo" column (case-insensitive)
+            const todoColumn = projectColumns.data.find(column => column.name.toLowerCase() === "todo");
 
             if (todoColumn) {
               // Add the issue to the "Todo" column
@@ -52,6 +58,7 @@ jobs:
                 content_id: issueNumber,
                 content_type: 'Issue'
               });
+              console.log(`Issue #${issueNumber} added to the "Todo" column in project "${projectName}".`);
             } else {
               console.log('Todo column not found');
             }
