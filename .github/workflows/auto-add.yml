@@ -32,7 +32,7 @@ jobs:
                     nodes {
                       id
                       title
-                      columns(first: 10) {
+                      views(first: 10) {
                         nodes {
                           id
                           name
@@ -56,34 +56,34 @@ jobs:
               return;  // Exit if no projects found
             }
 
-            // Log the found projects
+            // Log the found projects and their views (columns)
             result.repository.projectsV2.nodes.forEach(project => {
               console.log(`Project Title: ${project.title}, Project ID: ${project.id}`);
               
-              // Check columns in the project
-              project.columns.nodes.forEach(column => {
-                console.log(`Column Name: ${column.name}, Column ID: ${column.id}`);
+              // Check views (columns) in the project
+              project.views.nodes.forEach(view => {
+                console.log(`View (Column) Name: ${view.name}, View ID: ${view.id}`);
               });
             });
 
-            // Find the project and column
+            // Find the project and view
             let project = result.repository.projectsV2.nodes.find(p => p.title === projectName);
 
             if (!project) {
               throw new Error(`GitHub Project with name "${projectName}" not found.`);
             }
 
-            // Find the "Todo" column in the project
-            const todoColumn = project.columns.nodes.find(column => column.name.toLowerCase() === "todo");
+            // Find the "Todo" view (column) in the project
+            const todoView = project.views.nodes.find(view => view.name.toLowerCase() === "todo");
 
-            if (todoColumn) {
-              // Add the issue to the "Todo" column
+            if (todoView) {
+              // Add the issue to the "Todo" view
               await github.rest.projects.createCard({
-                column_id: todoColumn.id,  // Column ID for "Todo"
+                project_id: project.id,  // Project ID
                 content_id: issueNumber,
                 content_type: 'Issue'
               });
-              console.log(`Issue #${issueNumber} added to the "Todo" column in project "${projectName}".`);
+              console.log(`Issue #${issueNumber} added to the "Todo" view in project "${projectName}".`);
             } else {
-              console.log('Todo column not found');
+              console.log('Todo view (column) not found');
             }
